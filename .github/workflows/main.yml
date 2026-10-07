@@ -1,0 +1,109 @@
+name: CI/CD
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: production-deployment
+  cancel-in-progress: false
+
+jobs:
+  test:
+    name: Tests and coverage
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 10.0.x
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22.x
+          cache: npm
+
+      - name: Restore .NET dependencies
+        run: dotnet restore
+
+      - name: Install test dependencies
+        run: npm ci
+
+      - name: Install coverage collector
+        run: dotnet tool install --global dotnet-coverage
+
+      - name: Run integration tests with coverage
+        run: dotnet-coverage collect "npm test" --settings coverage.runsettings --output coverage/coverage.cobertura.xml --output-format cobertura
+
+      - name: Enforce 70 percent line coverage
+        shell: bash
+        run: |
+          line_rate=$(sed -n 's/.*line-rate="\([0-9.]*\)".*/\1/p' coverage/coverage.cobertura.xml | head -n 1)
+          coverage=$(awk "BEGIN { printf \"%.2f\", $line_rate * 100 }")
+          echo "Backend line coverage: ${coverage}%"
+          awk "BEGIN { exit !($coverage >= 70) }"
+
+      - name: Upload coverage report
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-cobertura
+          path: coverage/coverage.cobertura.xml
+          if-no-files-found: error
+
+  publish-and-deploy:
+    name: Publish image and deploy
+    needs: test
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    environment: production
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Log in to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build and push image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          push: true
+          tags: |
+            ${{ secrets.DOCKERHUB_USERNAME }}/webapp-api:latest
+            ${{ secrets.DOCKERHUB_USERNAME }}/webapp-api:${{ github.sha }}
+
+      - name: Configure SSH access
+        shell: bash
+        env:
+          EC2_SSH_KEY: ${{ secrets.EC2_SSH_KEY }}
+          EC2_SSH_HOST_KEY: ${{ secrets.EC2_SSH_HOST_KEY }}
+        run: |
+          install -d -m 700 ~/.ssh
+          printf '%s\n' "$EC2_SSH_KEY" > ~/.ssh/id_ed25519
+          chmod 600 ~/.ssh/id_ed25519
+          printf '%s\n' "$EC2_SSH_HOST_KEY" > ~/.ssh/known_hosts
+
+      - name: Deploy the immutable image to EC2
+        shell: bash
+        env:
+          EC2_HOST: ${{ secrets.EC2_HOST }}
+          EC2_USER: ${{ secrets.EC2_USER }}
+          IMAGE: ${{ secrets.DOCKERHUB_USERNAME }}/webapp-api:${{ github.sha }}
+        run: ssh -i ~/.ssh/id_ed25519 -o StrictHostKeyChecking=yes "${EC2_USER}@${EC2_HOST}" "IMAGE='${IMAGE}' bash -s" < scripts/deploy-ec2.sh

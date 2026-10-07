@@ -1,0 +1,19 @@
+{
+  "name": "webapp-api-tests",
+  "private": true,
+  "scripts": {
+    "test": "jest --runInBand"
+  },
+  "devDependencies": {
+    "jest": "^30.2.0"
+  },
+  "jest": {
+    "roots": [
+      "<rootDir>/tests"
+    ],
+    "testMatch": [
+      "<rootDir>/tests/**/*.test.js"
+    ],
+    "testTimeout": 30000
+  }
+}

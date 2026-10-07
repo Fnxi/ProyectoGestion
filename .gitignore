@@ -1,0 +1,9 @@
+bin/
+obj/
+node_modules/
+TestResults/
+*.test.db
+webapp.db
+coverage/
+.env
+.env.*

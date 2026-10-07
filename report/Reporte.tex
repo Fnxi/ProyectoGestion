@@ -1,0 +1,83 @@
+\documentclass[12pt,a4paper]{article}
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage[spanish]{babel}
+\usepackage{geometry}
+\usepackage{graphicx}
+\usepackage{hyperref}
+\usepackage{enumitem}
+\geometry{margin=2.5cm}
+\hypersetup{colorlinks=true,linkcolor=black,urlcolor=blue}
+
+\begin{document}
+\begin{titlepage}
+\centering
+{\Large NOMBRE DE LA INSTITUCION\par}
+\vspace{1cm}
+{\large ASIGNATURA\par}
+\vfill
+{\LARGE\bfseries Proyecto Integrador: Pipeline CI/CD Automatizado para una API REST\par}
+\vspace{1cm}
+{\large Docker, GitHub Actions y AWS EC2\par}
+\vfill
+\begin{flushright}
+Integrantes: NOMBRES DEL EQUIPO\\
+Docente: NOMBRE DEL DOCENTE\\
+Fecha: \today
+\end{flushright}
+\end{titlepage}
+
+\section{Introduccion}
+El desarrollo de software moderno no concluye cuando una aplicacion funciona en la computadora del programador. Una API que se entrega a usuarios requiere controles de calidad repetibles, una forma confiable de empaquetar sus dependencias y un mecanismo seguro para llegar al servidor donde sera consumida. La integracion continua y la entrega continua, conocidas como CI/CD, responden a esta necesidad al automatizar las verificaciones y el despliegue desde un cambio versionado hasta una version disponible en produccion.
+
+Este proyecto implementa ese flujo para una API REST de tareas y categorias desarrollada con ASP.NET Core y SQLite. La aplicacion ofrece operaciones para administrar tareas, categorias, respaldos y estado de salud. Cada cambio dirigido a la rama principal inicia GitHub Actions: el servicio se prueba de forma aislada, se mide la cobertura de codigo y, si se cumplen las condiciones de calidad, se construye una imagen Docker. La imagen se publica en Docker Hub con una etiqueta inmutable basada en el SHA del commit, lo que permite identificar exactamente el codigo que se esta ejecutando en cada despliegue.
+
+La etapa de entrega se ejecuta en una instancia Ubuntu de Amazon EC2. Un script recibido por SSH descarga la imagen validada, inicia una version candidata en un puerto local alterno y consulta el endpoint de salud. Nginx cambia el trafico HTTP hacia esa version solo despues de comprobar que responde correctamente. Este patron blue/green reduce la interrupcion visible para los consumidores de la API y conserva los datos en un volumen Docker separado de los contenedores. Las credenciales de Docker Hub, la direccion del servidor y la clave privada no se almacenan en el repositorio; GitHub Secrets las inyecta exclusivamente durante la ejecucion autorizada.
+
+El resultado demuestra que automatizar no significa omitir controles, sino convertirlos en condiciones obligatorias y auditables. La evidencia de pruebas, cobertura, etiquetas de imagen y ejecuciones del workflow permite reconstruir el recorrido de cada entrega. A su vez, la separacion entre codigo, configuracion sensible y datos persistentes favorece una operacion mas segura y facilita que el equipo pueda repetir el proceso sin pasos manuales ambiguos.
+
+\section{Arquitectura y proceso}
+La Figura~\ref{fig:architecture} representa el recorrido de una entrega. Las solicitudes de cambio se validan sin acceder a secretos. Un push exitoso a \texttt{main} publica la imagen y habilita el despliegue protegido por el entorno de produccion de GitHub.
+
+\begin{figure}[ht]
+\centering
+\fbox{\parbox{0.85\textwidth}{\centering\vspace{1.5cm}Insertar captura o diagrama: GitHub Actions $\rightarrow$ Docker Hub $\rightarrow$ EC2/Nginx/Docker.\vspace{1.5cm}}}
+\caption{Arquitectura del pipeline CI/CD.}
+\label{fig:architecture}
+\end{figure}
+
+El workflow ejecuta Jest, que inicia la API con una base SQLite temporal para realizar pruebas de integracion. \texttt{dotnet-coverage} recolecta la cobertura del proceso ASP.NET y el pipeline exige al menos 70\% de cobertura de lineas. Luego Docker construye una imagen multi-stage: la etapa SDK compila y publica, mientras la imagen final contiene solo el runtime necesario.
+
+Para el despliegue, el script determina cual de los puertos locales 8081 o 8082 esta activo. Descarga la imagen identificada por SHA, inicia el contenedor alterno, prueba \texttt{/api/health} y recarga Nginx. Finalmente elimina el contenedor anterior. La base SQLite reside en el volumen \texttt{webapp-api-data}, por lo que no se pierde al recrear contenedores.
+
+\section{Resultados}
+La suite automatizada incluye operaciones exitosas y errores esperados para tareas, categorias, respaldos y limpieza de datos. La Figura~\ref{fig:tests} debe mostrar el resumen de las pruebas y la cobertura publicados por GitHub Actions. El workflow falla si no se alcanza el umbral definido, evitando que una version sin calidad comprobada llegue al registro de imagenes.
+
+\begin{figure}[ht]
+\centering
+\fbox{\parbox{0.85\textwidth}{\centering\vspace{1.5cm}Insertar captura del job ``Tests and coverage'' con pruebas aprobadas y porcentaje de cobertura.\vspace{1.5cm}}}
+\caption{Ejecucion de pruebas y cobertura en GitHub Actions.}
+\label{fig:tests}
+\end{figure}
+
+La Figura~\ref{fig:deployment} debe evidenciar las etiquetas \texttt{latest} y SHA en Docker Hub y una consulta HTTP exitosa a la EC2. El uso del SHA proporciona trazabilidad: se puede relacionar la imagen descargada con un commit especifico y con los resultados de las pruebas que habilitaron su publicacion.
+
+\begin{figure}[ht]
+\centering
+\fbox{\parbox{0.85\textwidth}{\centering\vspace{1.5cm}Insertar captura de Docker Hub y de \texttt{http://IP_EC2/api/health}.\vspace{1.5cm}}}
+\caption{Imagen publicada y verificacion de la API desplegada.}
+\label{fig:deployment}
+\end{figure}
+
+\section{Conclusion}
+La implementacion integra desarrollo, pruebas, empaquetado y despliegue en un unico proceso repetible. La ejecucion automatica de pruebas de integracion y el umbral de cobertura convierten la calidad en una condicion previa a la entrega. Docker elimina diferencias entre el entorno local y la instancia EC2, mientras que las etiquetas con SHA permiten identificar con precision la version desplegada.
+
+El despliegue blue/green propuesto disminuye el riesgo de indisponibilidad al validar la version candidata antes de redirigir el trafico. El uso de GitHub Secrets y la verificacion de la clave de host SSH evita exponer credenciales, direcciones o claves en el codigo fuente. Como mejora futura, la API puede ampliar su dominio hasta el numero de endpoints requerido por la rubrica y migrar SQLite a un servicio administrado si aumenta la concurrencia o la necesidad de escalabilidad.
+
+\begin{thebibliography}{9}
+\bibitem{gha} GitHub. \textit{GitHub Actions documentation}. \url{https://docs.github.com/actions}.
+\bibitem{docker} Docker. \textit{Docker documentation}. \url{https://docs.docker.com/}.
+\bibitem{aws} Amazon Web Services. \textit{Amazon EC2 User Guide}. \url{https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/}.
+\bibitem{aspnet} Microsoft. \textit{ASP.NET Core documentation}. \url{https://learn.microsoft.com/aspnet/core/}.
+\end{thebibliography}
+\end{document}

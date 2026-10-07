@@ -1,0 +1,13 @@
+bin/
+obj/
+node_modules/
+tests/
+coverage/
+.git/
+.github/
+.env
+.env.*
+*.db
+*.log
+README.md
+report/
