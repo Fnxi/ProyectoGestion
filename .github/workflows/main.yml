@@ -60,12 +60,11 @@ jobs:
           path: coverage/coverage.cobertura.xml
           if-no-files-found: error
 
-  publish-and-deploy:
-    name: Publish image and deploy
+  publish:
+    name: Publish image
     needs: test
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
-    environment: production
 
     steps:
       - name: Checkout
@@ -88,6 +87,17 @@ jobs:
           tags: |
             ${{ secrets.DOCKERHUB_USERNAME }}/webapp-api:latest
             ${{ secrets.DOCKERHUB_USERNAME }}/webapp-api:${{ github.sha }}
+
+  deploy:
+    name: Deploy to EC2
+    needs: publish
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main' && needs.publish.result == 'success'
+    runs-on: ubuntu-latest
+    environment: production
+
+    steps:
+      - name: Checkout deployment script
+        uses: actions/checkout@v4
 
       - name: Configure SSH access
         shell: bash
