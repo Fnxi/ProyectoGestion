@@ -40,9 +40,7 @@ using (var connection = new SqliteConnection($"Data Source={dbPath};Pooling=Fals
 }
 
 
-// ======================================================
-// FUNCIÓN PARA ABRIR LA BASE DE DATOS
-// ======================================================
+
 
 SqliteConnection OpenDatabase()
 {
@@ -63,14 +61,11 @@ app.MapGet("/api/health", () => Results.Ok(new
     statusCode = 200,
     data = new
     {
-        status = "healthy"
+        status = "healthy revisando"
     }
 }));
 
 
-// ======================================================
-// 1. GET - TODAS LAS TAREAS
-// ======================================================
 
 app.MapGet("/api/tasks", () =>
 {

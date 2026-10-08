@@ -87,7 +87,7 @@ describe("API de tareas y categorías", () => {
     const { response, body } = await request("/api/health");
 
     expect(response.status).toBe(200);
-    expect(body).toEqual({ statusCode: 200, data: { status: "healthy" } });
+    expect(body).toEqual({ statusCode: 200, data: { status: "healthy revisando" } });
   });
 
   test("GET /api/tasks devuelve una lista vacía al iniciar", async () => {
