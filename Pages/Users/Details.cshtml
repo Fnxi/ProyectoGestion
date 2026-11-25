@@ -1,0 +1,10 @@
+@page "/users/{id}"
+@model WebApp.Pages.Users.DetailsModel
+@{
+    ViewData["Title"] = "Detalle de usuario";
+}
+<div class="d-flex flex-column flex-sm-row justify-content-between align-items-sm-center gap-3 mb-4"><div><h1 class="h2 mb-1">@Model.UserData.UserName</h1><p class="text-body-secondary mb-0">Detalle de la cuenta</p></div><div class="d-flex gap-2"><a class="btn btn-outline-secondary" asp-page="/Users/Index">Volver</a><a class="btn btn-primary" asp-page="/Users/Edit" asp-route-id="@Model.UserData.Id">Editar</a></div></div>
+@if (TempData["ErrorMessage"] is string errorMessage) { <div class="alert alert-danger" role="alert">@errorMessage</div> }
+<section class="card border-0 shadow-sm"><div class="card-body p-4"><dl class="row mb-4"><dt class="col-sm-4">Nombre</dt><dd class="col-sm-8">@string.Join(' ', new[] { Model.UserData.FirstName, Model.UserData.LastName }.Where(value => !string.IsNullOrWhiteSpace(value)))</dd><dt class="col-sm-4">Correo</dt><dd class="col-sm-8">@Model.UserData.Email</dd><dt class="col-sm-4">Nombre de usuario</dt><dd class="col-sm-8">@Model.UserData.UserName</dd><dt class="col-sm-4">Roles</dt><dd class="col-sm-8">@string.Join(", ", Model.UserData.Roles)</dd><dt class="col-sm-4">Estado</dt><dd class="col-sm-8">@(Model.UserData.IsActive ? "Activo" : "Inactivo")</dd><dt class="col-sm-4">Creado</dt><dd class="col-sm-8">@Model.UserData.CreatedAtUtc.ToLocalTime().ToString("g")</dd></dl>
+<form method="post" asp-page-handler="Status" onsubmit="return confirm('¿Confirmas el cambio de estado de esta cuenta?');"><input type="hidden" name="isActive" value="@(!Model.UserData.IsActive).ToString().ToLowerInvariant()" /><button type="submit" class="btn @(Model.UserData.IsActive ? "btn-outline-danger" : "btn-outline-success")">@(Model.UserData.IsActive ? "Desactivar cuenta" : "Activar cuenta")</button></form>
+</div></section>

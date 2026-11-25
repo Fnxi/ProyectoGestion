@@ -1,0 +1,12 @@
+@page "/products/{id:int}/delete"
+@model WebApp.Pages.Products.DeleteModel
+@{
+    ViewData["Title"] = "Eliminar producto";
+}
+
+<div class="row justify-content-center"><div class="col-lg-7"><section class="card border-0 shadow-sm"><div class="card-body p-4">
+    <h1 class="h3">Eliminar producto</h1>
+    <p>¿Seguro que deseas eliminar <strong>@Model.Product.Name</strong>? Esta acción no se puede deshacer.</p>
+    <dl class="row text-body-secondary"><dt class="col-sm-4">Precio</dt><dd class="col-sm-8">@Model.Product.Price.ToString("C")</dd><dt class="col-sm-4">Stock</dt><dd class="col-sm-8">@Model.Product.Stock</dd></dl>
+    <form method="post" class="d-flex gap-2"><a class="btn btn-outline-secondary" asp-page="/Products/Index">Cancelar</a><button type="submit" class="btn btn-danger">Eliminar producto</button></form>
+</div></section></div></div>

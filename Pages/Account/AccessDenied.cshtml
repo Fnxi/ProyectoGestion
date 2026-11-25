@@ -1,0 +1,17 @@
+@page "/account/access-denied"
+@model WebApp.Pages.Account.AccessDeniedModel
+@{
+    ViewData["Title"] = "Acceso denegado";
+}
+
+<div class="row justify-content-center">
+    <div class="col-md-8 col-lg-6">
+        <section class="card border-0 shadow-sm">
+            <div class="card-body p-4 p-lg-5 text-center">
+                <h1 class="h3">Acceso denegado</h1>
+                <p class="text-body-secondary">No tienes permisos suficientes para acceder a esta sección.</p>
+                <a class="btn btn-primary" asp-page="/Dashboard/Index">Volver al dashboard</a>
+            </div>
+        </section>
+    </div>
+</div>

@@ -1,0 +1,25 @@
+# Ejemplo de agente separado. No se integra con el despliegue blue/green existente.
+services:
+  webapp-hostmetrics:
+    image: otel/opentelemetry-collector-contrib:0.165.1
+    container_name: webapp-hostmetrics
+    command: ["--config=/etc/otelcol-contrib/hostmetrics-config.yaml"]
+    restart: unless-stopped
+    read_only: true
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    environment:
+      OTEL_SERVICE_NAME: ${OTEL_SERVICE_NAME:?required}
+      DEPLOYMENT_ENVIRONMENT: ${DEPLOYMENT_ENVIRONMENT:?required}
+      EC2_INSTANCE_NAME: ${EC2_INSTANCE_NAME:?required}
+      OPENOBSERVE_OTLP_METRICS_ENDPOINT: ${OPENOBSERVE_OTLP_METRICS_ENDPOINT:?required}
+      OPENOBSERVE_OTLP_AUTHORIZATION: ${OPENOBSERVE_OTLP_AUTHORIZATION:?required}
+      OPENOBSERVE_ORGANIZATION: ${OPENOBSERVE_ORGANIZATION:?required}
+      OPENOBSERVE_METRICS_STREAM: ${OPENOBSERVE_METRICS_STREAM:?required}
+    volumes:
+      - ./hostmetrics-config.yaml:/etc/otelcol-contrib/hostmetrics-config.yaml:ro
+      - /:/hostfs:ro,rslave
+      - /proc:/hostfs/proc:ro
+      - /sys:/hostfs/sys:ro

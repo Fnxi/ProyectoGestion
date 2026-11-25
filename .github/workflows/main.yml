@@ -117,3 +117,31 @@ jobs:
           EC2_USER: ${{ secrets.EC2_USER }}
           IMAGE: ${{ secrets.DOCKERHUB_USERNAME }}/webapp-api:${{ github.sha }}
         run: ssh -i ~/.ssh/id_ed25519 -o StrictHostKeyChecking=yes "${EC2_USER}@${EC2_HOST}" "IMAGE='${IMAGE}' bash -s" < scripts/deploy-ec2.sh
+
+  pipeline-observability:
+    name: Record pipeline execution
+    needs: [test, publish, deploy]
+    if: ${{ always() }}
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      actions: read
+
+    steps:
+      - name: Checkout reporting script
+        uses: actions/checkout@v4
+
+      - name: Send pipeline event to OpenObserve
+        continue-on-error: true
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+          OPENOBSERVE_URL: ${{ vars.OPENOBSERVE_URL }}
+          OPENOBSERVE_ORGANIZATION: ${{ vars.OPENOBSERVE_ORGANIZATION }}
+          OPENOBSERVE_PIPELINE_STREAM: ${{ vars.OPENOBSERVE_PIPELINE_STREAM }}
+          OPENOBSERVE_USERNAME: ${{ secrets.OPENOBSERVE_USERNAME }}
+          OPENOBSERVE_PASSWORD: ${{ secrets.OPENOBSERVE_PASSWORD }}
+          PIPELINE_TEST_RESULT: ${{ needs.test.result }}
+          PIPELINE_PUBLISH_RESULT: ${{ needs.publish.result }}
+          PIPELINE_DEPLOY_RESULT: ${{ needs.deploy.result }}
+          PIPELINE_ENVIRONMENT: production
+        run: node scripts/pipeline-observability.js

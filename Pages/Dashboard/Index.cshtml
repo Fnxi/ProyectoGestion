@@ -1,0 +1,43 @@
+@page "/dashboard"
+@model WebApp.Pages.Dashboard.IndexModel
+@{
+    ViewData["Title"] = "Dashboard";
+}
+
+<section class="mb-4">
+    <p class="text-primary fw-semibold mb-1">Panel administrativo</p>
+    <h1 class="h2 mb-2">Hola, @Model.DisplayName</h1>
+    <p class="text-body-secondary mb-0">@Model.Email</p>
+</section>
+
+<div class="row g-4">
+    <div class="col-md-6 col-xl-4">
+        <article class="card h-100 border-0 shadow-sm">
+            <div class="card-body">
+                <h2 class="h5">Rol actual</h2>
+                <p class="mb-0">@Model.RoleSummary</p>
+            </div>
+        </article>
+    </div>
+    <div class="col-md-6 col-xl-4">
+        <article class="card h-100 border-0 shadow-sm">
+            <div class="card-body">
+                <h2 class="h5">Productos</h2>
+                <p class="text-body-secondary mb-3">La gestión de productos estará disponible en una próxima etapa.</p>
+                <a class="btn btn-outline-primary" asp-page="/Products/Index">Ver sección</a>
+            </div>
+        </article>
+    </div>
+    @if (User.IsInRole("Admin"))
+    {
+        <div class="col-md-6 col-xl-4">
+            <article class="card h-100 border-0 shadow-sm">
+                <div class="card-body">
+                    <h2 class="h5">Usuarios</h2>
+                    <p class="text-body-secondary mb-3">La administración de usuarios estará disponible en una próxima etapa.</p>
+                    <a class="btn btn-outline-primary" asp-page="/Users/Index">Ver sección</a>
+                </div>
+            </article>
+        </div>
+    }
+</div>

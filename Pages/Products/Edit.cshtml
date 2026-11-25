@@ -1,0 +1,8 @@
+@page "/products/{id:int}/edit"
+@model WebApp.Pages.Products.EditModel
+@{
+    ViewData["Title"] = "Editar producto";
+}
+
+<div class="mb-4"><h1 class="h2 mb-1">Editar producto</h1><p class="text-body-secondary mb-0">Actualiza la información del producto.</p></div>
+<section class="card border-0 shadow-sm"><div class="card-body p-4"><partial name="_ProductForm" for="Input" /></div></section>

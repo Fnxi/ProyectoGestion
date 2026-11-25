@@ -1,0 +1,31 @@
+html {
+    min-height: 100%;
+}
+
+body {
+    min-height: 100vh;
+}
+
+.user-email {
+    max-width: 18rem;
+}
+
+.field-validation-error {
+    display: block;
+    margin-top: .25rem;
+}
+
+.validation-summary-valid {
+    display: none;
+}
+
+.product-description {
+    max-width: 28rem;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.description-content {
+    white-space: pre-wrap;
+}

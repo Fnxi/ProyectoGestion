@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"] - WebApp</title>
+    <link rel="stylesheet" href="~/lib/bootstrap/css/bootstrap.min.css" />
+    <link rel="stylesheet" href="~/css/site.css" />
+</head>
+<body class="bg-body-tertiary">
+    <header>
+        <nav class="navbar navbar-expand-lg navbar-dark bg-primary shadow-sm">
+            <div class="container">
+                <a class="navbar-brand fw-semibold" asp-page="/Dashboard/Index">WebApp</a>
+                <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#mainNavigation" aria-controls="mainNavigation" aria-expanded="false" aria-label="Abrir navegación">
+                    <span class="navbar-toggler-icon"></span>
+                </button>
+                <div class="collapse navbar-collapse" id="mainNavigation">
+                    @if (User.Identity?.IsAuthenticated == true)
+                    {
+                        <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+                            <li class="nav-item"><a class="nav-link" asp-page="/Dashboard/Index">Dashboard</a></li>
+                            <li class="nav-item"><a class="nav-link" asp-page="/Products/Index">Productos</a></li>
+                            @if (User.IsInRole("Admin"))
+                            {
+                                <li class="nav-item"><a class="nav-link" asp-page="/Users/Index">Usuarios</a></li>
+                            }
+                        </ul>
+                        <div class="d-flex align-items-lg-center gap-2">
+                            <span class="navbar-text text-white-50 small text-truncate user-email">@User.Identity.Name</span>
+                            <form method="post" asp-page="/Account/Logout">
+                                <button type="submit" class="btn btn-outline-light btn-sm">Cerrar sesión</button>
+                            </form>
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="ms-auto"><a class="btn btn-outline-light btn-sm" asp-page="/Account/Login">Iniciar sesión</a></div>
+                    }
+                </div>
+            </div>
+        </nav>
+    </header>
+    <main class="container py-4 py-lg-5">
+        @RenderBody()
+    </main>
+    <script src="~/lib/bootstrap/js/bootstrap.bundle.min.js"></script>
+    @await RenderSectionAsync("Scripts", required: false)
+</body>
+</html>

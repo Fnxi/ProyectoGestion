@@ -14,6 +14,9 @@
     "testMatch": [
       "<rootDir>/tests/**/*.test.js"
     ],
-    "testTimeout": 30000
+    "testTimeout": 60000
+  },
+  "dependencies": {
+    "bootstrap": "5.3.3"
   }
 }

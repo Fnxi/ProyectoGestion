@@ -1,0 +1,59 @@
+{
+  "url": "https://seleniumbase.io/demo_page",
+  "fecha": "2026-10-14T18:47:13-06:00",
+  "total": 10,
+  "aprobados": 10,
+  "fallidos": 0,
+  "resultados": [
+    {
+      "caso": "Carga, encabezados, formulario, tabla y SVG",
+      "estado": "APROBADO",
+      "detalle": "Comportamiento verificado."
+    },
+    {
+      "caso": "Campos de texto, area, placeholder, prellenado y solo lectura",
+      "estado": "APROBADO",
+      "detalle": "Comportamiento verificado."
+    },
+    {
+      "caso": "SVG y boton con alternancia de color",
+      "estado": "APROBADO",
+      "detalle": "Comportamiento verificado."
+    },
+    {
+      "caso": "Slider y barra de progreso",
+      "estado": "APROBADO",
+      "detalle": "Comportamiento verificado."
+    },
+    {
+      "caso": "Select y medidor en sus cuatro opciones",
+      "estado": "APROBADO",
+      "detalle": "Comportamiento verificado."
+    },
+    {
+      "caso": "Los tres iFrames y checkbox interno",
+      "estado": "APROBADO",
+      "detalle": "Comportamiento verificado."
+    },
+    {
+      "caso": "Radios, checkboxes y revelado de fila",
+      "estado": "APROBADO",
+      "detalle": "Comportamiento verificado."
+    },
+    {
+      "caso": "Arrastrar imagen entre zonas de destino",
+      "estado": "APROBADO",
+      "detalle": "Comportamiento verificado."
+    },
+    {
+      "caso": "Menu desplegable por hover y opcion",
+      "estado": "APROBADO",
+      "detalle": "Comportamiento verificado."
+    },
+    {
+      "caso": "Cuatro enlaces externos e internos",
+      "estado": "APROBADO",
+      "detalle": "Comportamiento verificado."
+    }
+  ]
+}

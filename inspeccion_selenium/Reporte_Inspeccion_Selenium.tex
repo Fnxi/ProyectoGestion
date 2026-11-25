@@ -1,0 +1,29 @@
+\documentclass[12pt,a4paper]{report}
+\usepackage[spanish,es-nodecimaldot]{babel}
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{lmodern,graphicx,hyperref,geometry,setspace,float,longtable,booktabs,tabularx,array,enumitem,xcolor,listings,fancyhdr,microtype}
+\geometry{margin=2.5cm}
+\onehalfspacing
+\hypersetup{colorlinks=true,linkcolor=black,urlcolor=blue,pdftitle={Reporte de Inspeccion Selenium},pdfauthor={Francisco Giovanni Lopez Moscosa}}
+\pagestyle{fancy}\fancyhf{}\fancyhead[L]{Automatizacion de Pruebas con Selenium}\fancyhead[R]{Francisco Giovanni Lopez Moscosa}\fancyfoot[C]{\thepage}
+\begin{document}
+\begin{titlepage}\centering
+{\scshape\LARGE Universidad Tecnologica de Queretaro\par}\vspace{2cm}
+{\huge\bfseries Reporte de Inspeccion Automatizada\par}\vspace{0.8cm}
+{\LARGE\bfseries Selenium WebDriver - SeleniumBase Demo Page\par}\vspace{2cm}
+{\Large Alumno: Francisco Giovanni Lopez Moscosa\par}
+{\Large Carrera: Ingenieria en Desarrollo de Software Multiplataforma\par}
+{\Large Matricula: 2023371156\par}\vfill
+{\Large Queretaro, Qro. - 14 de octubre de 2026\par}
+\end{titlepage}
+\tableofcontents\newpage
+\chapter{Objetivo}
+Inspeccionar funcionalmente todos los elementos interactivos de \url{https://seleniumbase.io/demo_page} utilizando Selenium WebDriver con Python.
+\chapter{Ambiente y alcance}
+La ejecucion utiliza Python 3, Selenium WebDriver, Google Chrome en modo headless y Selenium Manager. El script prueba la carga de la pagina, formulario, campos de texto, SVG, boton, slider, progress, select, meter, tres iFrames, radios, checkboxes, arrastrar y soltar, menu por hover y cuatro enlaces.
+\chapter{Resultados}
+El archivo \texttt{evidencias/resultados.json}, generado durante la ejecucion, contiene el detalle y estado de cada caso. Las capturas numeradas en \texttt{evidencias/} constituyen evidencia visual reproducible. El PDF final \texttt{Reporte\_Inspeccion\_Selenium.pdf} se crea a partir de dichos resultados mediante \texttt{generar\_reporte.py}.
+\chapter{Conclusiones}
+La automatizacion verifica tanto la presencia de los controles como sus efectos observables, por ejemplo, cambios de texto y color, actualizacion de valores, seleccion, navegacion y movimiento de un elemento entre zonas de destino. Esto permite repetir la inspeccion de forma trazable.
+\end{document}

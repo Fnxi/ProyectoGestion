@@ -1,0 +1,29 @@
+@page "/users"
+@model WebApp.Pages.Users.IndexModel
+@{
+    ViewData["Title"] = "Usuarios";
+}
+
+<div class="d-flex flex-column flex-sm-row justify-content-between align-items-sm-center gap-3 mb-4">
+    <div><h1 class="h2 mb-1">Usuarios</h1><p class="text-body-secondary mb-0">Administra cuentas y roles del sistema.</p></div>
+    <a class="btn btn-primary" asp-page="/Users/Create">Nuevo usuario</a>
+</div>
+@if (TempData["SuccessMessage"] is string successMessage)
+{
+    <div class="alert alert-success alert-dismissible fade show" role="alert">@successMessage<button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Cerrar"></button></div>
+}
+<section class="card border-0 shadow-sm">
+@if (Model.Users.Count == 0)
+{
+    <div class="card-body p-4 text-center"><h2 class="h5">No hay usuarios registrados</h2><p class="text-body-secondary">Crea la primera cuenta administrativa.</p></div>
+}
+else
+{
+    <div class="table-responsive"><table class="table table-hover align-middle mb-0"><thead><tr><th>Nombre</th><th>Correo</th><th>Usuario</th><th>Roles</th><th>Estado</th><th><span class="visually-hidden">Acciones</span></th></tr></thead><tbody>
+    @foreach (var user in Model.Users)
+    {
+        <tr><td>@(string.Join(' ', new[] { user.FirstName, user.LastName }.Where(value => !string.IsNullOrWhiteSpace(value))))</td><td>@user.Email</td><td>@user.UserName</td><td>@string.Join(", ", user.Roles)</td><td><span class="badge @(user.IsActive ? "text-bg-success" : "text-bg-secondary")">@(user.IsActive ? "Activo" : "Inactivo")</span></td><td class="text-end text-nowrap"><a class="btn btn-sm btn-outline-secondary" asp-page="/Users/Details" asp-route-id="@user.Id">Ver</a><a class="btn btn-sm btn-outline-primary" asp-page="/Users/Edit" asp-route-id="@user.Id">Editar</a></td></tr>
+    }
+    </tbody></table></div>
+}
+</section>
