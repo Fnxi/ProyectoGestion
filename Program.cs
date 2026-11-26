@@ -24,6 +24,10 @@ var bootstrapOperator = builder.Configuration
     .GetSection(BootstrapOperatorOptions.SectionName)
     .Get<BootstrapOperatorOptions>()
     ?? new BootstrapOperatorOptions();
+var allowInsecureHttp = builder.Configuration.GetValue<bool>("AllowInsecureHttp");
+var cookieSecurePolicy = builder.Environment.IsDevelopment() || allowInsecureHttp
+    ? CookieSecurePolicy.SameAsRequest
+    : CookieSecurePolicy.Always;
 
 LegacySchemaInitializer.Initialize(connectionString);
 
@@ -40,9 +44,7 @@ builder.Services.AddAntiforgery(options =>
     options.Cookie.Name = "WebApp.Antiforgery";
     options.Cookie.HttpOnly = true;
     options.Cookie.SameSite = SameSiteMode.Strict;
-    options.Cookie.SecurePolicy = builder.Environment.IsDevelopment()
-        ? CookieSecurePolicy.SameAsRequest
-        : CookieSecurePolicy.Always;
+    options.Cookie.SecurePolicy = cookieSecurePolicy;
 });
 builder.Services.AddAuthentication(IdentityConstants.ApplicationScheme)
     .AddIdentityCookies();
@@ -53,9 +55,7 @@ builder.Services.ConfigureApplicationCookie(options =>
     options.Cookie.Name = "WebApp.Auth";
     options.Cookie.HttpOnly = true;
     options.Cookie.SameSite = SameSiteMode.Lax;
-    options.Cookie.SecurePolicy = builder.Environment.IsDevelopment()
-        ? CookieSecurePolicy.SameAsRequest
-        : CookieSecurePolicy.Always;
+    options.Cookie.SecurePolicy = cookieSecurePolicy;
     options.SlidingExpiration = true;
     options.ExpireTimeSpan = TimeSpan.FromHours(8);
     options.Events.OnRedirectToLogin = context =>
@@ -137,6 +137,7 @@ app.UseAuthorization();
 app.UseAntiforgery();
 
 app.MapSystemEndpoints(dbPath);
+app.MapGet("/", () => Results.Redirect("/account/login"));
 app.MapTaskEndpoints();
 app.MapCategoryEndpoints();
 app.MapProductEndpoints();

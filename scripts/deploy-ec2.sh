@@ -39,6 +39,7 @@ docker run -d --restart unless-stopped \
   --publish "127.0.0.1:${next_port}:80" \
   --mount "type=volume,source=${APP_NAME}-data,target=/data" \
   --env DatabasePath=/data/webapp.db \
+  --env AllowInsecureHttp=true \
   "$IMAGE"
 
 for _ in $(seq 1 30); do
@@ -60,6 +61,10 @@ cat > "$temp_config" <<EOF
 server {
     listen 80 default_server;
     server_name _;
+
+    location = / {
+        return 302 /account/login;
+    }
 
     location / {
         proxy_pass http://127.0.0.1:${next_port};
