@@ -40,11 +40,25 @@ jobs:
       - name: Install test dependencies
         run: npm ci
 
+      - name: Install Playwright Chromium
+        run: npx playwright install --with-deps chromium
+
       - name: Install coverage collector
         run: dotnet tool install --global dotnet-coverage
 
       - name: Run integration tests with coverage
         run: dotnet-coverage collect "npm test" --settings coverage.runsettings --output coverage/coverage.cobertura.xml --output-format cobertura
+
+      - name: Run Playwright end-to-end tests
+        run: npm run test:e2e
+
+      - name: Upload Playwright report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report
+          path: playwright-report/
+          if-no-files-found: ignore
 
       - name: Enforce 70 percent line coverage
         shell: bash
@@ -60,6 +74,19 @@ jobs:
           name: coverage-cobertura
           path: coverage/coverage.cobertura.xml
           if-no-files-found: error
+
+      - name: Test summary
+        if: always()
+        shell: bash
+        run: |
+          {
+            echo "## Quality gates"
+            echo
+            echo "- Backend and API integration tests: Jest + dotnet-coverage"
+            echo "- Browser E2E test: Playwright Chromium (root redirect, login, dashboard and Users CRUD access)"
+            echo "- Coverage threshold: 70% lines"
+            echo "- A failure in either suite blocks image publication and EC2 deployment."
+          } >> "$GITHUB_STEP_SUMMARY"
 
   publish:
     name: Publish image

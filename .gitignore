@@ -8,6 +8,9 @@ node_modules/
 
 # Coverage
 coverage/
+playwright-report/
+test-results/
+tests/playwright-data-protection-keys/
 
 # Local databases
 *.test.db
