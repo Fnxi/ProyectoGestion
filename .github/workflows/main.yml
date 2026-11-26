@@ -5,13 +5,14 @@ on:
     branches: [main]
   pull_request:
     branches: [main]
+  workflow_dispatch:
 
 permissions:
   contents: read
 
 concurrency:
-  group: production-deployment
-  cancel-in-progress: false
+  group: ci-cd-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
   test:
@@ -84,9 +85,20 @@ jobs:
         with:
           context: .
           push: true
+          provenance: false
           tags: |
             ${{ secrets.DOCKERHUB_USERNAME }}/webapp-api:latest
             ${{ secrets.DOCKERHUB_USERNAME }}/webapp-api:${{ github.sha }}
+
+      - name: Publish summary
+        shell: bash
+        run: |
+          {
+            echo "## Image published"
+            echo
+            echo "- Immutable tag: \`${{ github.sha }}\`"
+            echo "- Mutable tag: \`latest\`"
+          } >> "$GITHUB_STEP_SUMMARY"
 
   deploy:
     name: Deploy to EC2
@@ -110,13 +122,84 @@ jobs:
           chmod 600 ~/.ssh/id_ed25519
           printf '%s\n' "$EC2_SSH_HOST_KEY" > ~/.ssh/known_hosts
 
+      - name: Validate deployment configuration
+        shell: bash
+        env:
+          EC2_HOST: ${{ secrets.EC2_HOST }}
+          EC2_USER: ${{ secrets.EC2_USER }}
+          EC2_SSH_KEY: ${{ secrets.EC2_SSH_KEY }}
+          EC2_SSH_HOST_KEY: ${{ secrets.EC2_SSH_HOST_KEY }}
+          DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
+        run: |
+          for setting in EC2_HOST EC2_USER EC2_SSH_KEY EC2_SSH_HOST_KEY DOCKERHUB_USERNAME; do
+            if [ -z "${!setting}" ]; then
+              echo "::error title=Missing deployment configuration::Required secret ${setting} is not configured."
+              exit 1
+            fi
+          done
+          echo "Deployment configuration is present. Secret values are not printed."
+
+      - name: Verify SSH connectivity
+        shell: bash
+        env:
+          EC2_HOST: ${{ secrets.EC2_HOST }}
+          EC2_USER: ${{ secrets.EC2_USER }}
+        run: |
+          ssh -i ~/.ssh/id_ed25519 \
+            -o BatchMode=yes \
+            -o ConnectTimeout=20 \
+            -o ConnectionAttempts=2 \
+            -o ServerAliveInterval=10 \
+            -o ServerAliveCountMax=3 \
+            -o StrictHostKeyChecking=yes \
+            "${EC2_USER}@${EC2_HOST}" \
+            'printf "Connected to %s as %s\\n" "$(hostname)" "$(whoami)"; docker --version; nginx -v; curl --version | head -n 1'
+
       - name: Deploy the immutable image to EC2
         shell: bash
         env:
           EC2_HOST: ${{ secrets.EC2_HOST }}
           EC2_USER: ${{ secrets.EC2_USER }}
           IMAGE: ${{ secrets.DOCKERHUB_USERNAME }}/webapp-api:${{ github.sha }}
-        run: ssh -i ~/.ssh/id_ed25519 -o StrictHostKeyChecking=yes "${EC2_USER}@${EC2_HOST}" "IMAGE='${IMAGE}' bash -s" < scripts/deploy-ec2.sh
+        run: |
+          ssh -i ~/.ssh/id_ed25519 \
+            -o BatchMode=yes \
+            -o ConnectTimeout=20 \
+            -o ConnectionAttempts=2 \
+            -o ServerAliveInterval=10 \
+            -o ServerAliveCountMax=3 \
+            -o StrictHostKeyChecking=yes \
+            "${EC2_USER}@${EC2_HOST}" "IMAGE='${IMAGE}' bash -s" < scripts/deploy-ec2.sh
+
+      - name: Verify public application health
+        shell: bash
+        env:
+          EC2_HOST: ${{ secrets.EC2_HOST }}
+        run: |
+          health_url="http://${EC2_HOST}/api/health"
+          echo "Checking public health endpoint after deployment."
+          curl --fail --show-error --silent \
+            --connect-timeout 10 \
+            --max-time 20 \
+            --retry 6 \
+            --retry-all-errors \
+            --retry-delay 5 \
+            "$health_url"
+          echo
+
+      - name: Deployment summary
+        if: always()
+        shell: bash
+        env:
+          IMAGE: ${{ secrets.DOCKERHUB_USERNAME }}/webapp-api:${{ github.sha }}
+        run: |
+          {
+            echo "## EC2 deployment"
+            echo
+            echo "- Image: \`${IMAGE}\`"
+            echo "- Commit: \`${{ github.sha }}\`"
+            echo "- Public health endpoint was checked after the remote deployment."
+          } >> "$GITHUB_STEP_SUMMARY"
 
   pipeline-observability:
     name: Record pipeline execution
@@ -145,3 +228,27 @@ jobs:
           PIPELINE_DEPLOY_RESULT: ${{ needs.deploy.result }}
           PIPELINE_ENVIRONMENT: production
         run: node scripts/pipeline-observability.js
+
+      - name: Observability summary
+        if: always()
+        shell: bash
+        env:
+          OPENOBSERVE_URL: ${{ vars.OPENOBSERVE_URL }}
+          OPENOBSERVE_ORGANIZATION: ${{ vars.OPENOBSERVE_ORGANIZATION }}
+          OPENOBSERVE_PIPELINE_STREAM: ${{ vars.OPENOBSERVE_PIPELINE_STREAM }}
+          OPENOBSERVE_USERNAME: ${{ secrets.OPENOBSERVE_USERNAME }}
+          OPENOBSERVE_PASSWORD: ${{ secrets.OPENOBSERVE_PASSWORD }}
+        run: |
+          configured=true
+          for setting in OPENOBSERVE_URL OPENOBSERVE_ORGANIZATION OPENOBSERVE_PIPELINE_STREAM OPENOBSERVE_USERNAME OPENOBSERVE_PASSWORD; do
+            [ -n "${!setting}" ] || configured=false
+          done
+          {
+            echo "## OpenObserve"
+            echo
+            if [ "$configured" = true ]; then
+              echo "- Event delivery was attempted (credentials and URL are not displayed)."
+            else
+              echo "- Event delivery was skipped because the OpenObserve configuration is incomplete."
+            fi
+          } >> "$GITHUB_STEP_SUMMARY"
